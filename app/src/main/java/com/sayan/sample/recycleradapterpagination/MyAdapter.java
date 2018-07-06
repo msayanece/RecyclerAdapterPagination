@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -18,8 +19,12 @@ import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
 
-    List<Model> itemList;
-    Context context;
+    private List<Model> itemList;
+    private Context context;
+
+    private static final int VIEW_TYPE_CONTENT = 1;
+    private static final int VIEW_TYPE_PROGRESS = 2;
+    private boolean isLoading;
 
     public MyAdapter(List<Model> itemList, Context context) {
         this.itemList = itemList;
@@ -28,19 +33,46 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.child_list_layout,parent, false);
-
-        return new ViewHolder(view);
+        View view = null;
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) == null ?
+                LayoutInflater.from(context) : (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        if (inflater != null) {
+            switch (viewType) {
+                case VIEW_TYPE_CONTENT:
+                    view = inflater.inflate(R.layout.child_list_layout, parent, false);
+                    break;
+                case VIEW_TYPE_PROGRESS:
+                    view = inflater.inflate(R.layout.pagination_progress_child, parent, false);
+                    break;
+                default:
+                    view = inflater.inflate(R.layout.child_list_layout, parent, false);
+                    break;
+            }
+            return new ViewHolder(view, viewType);
+        }
+        return new ViewHolder(null, viewType);
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Model listItem = itemList.get(position);
-        holder.tvTitle.setText(listItem.getTitle());
-        holder.tvDescription.setText(listItem.getDescription());
-        Picasso.with(context).load(listItem.getImage()).into(holder.imageView);
-        //holder.imageView.setImageResource(Integer.parseInt(listItem.getIcon()));
+        if (getItemViewType(position) != VIEW_TYPE_PROGRESS) {
+            Model listItem = itemList.get(position);
+            holder.tvTitle.setText(listItem.getTitle());
+            holder.tvDescription.setText(listItem.getDescription());
+            Picasso.with(context).load(listItem.getImage()).into(holder.imageView);
+            //holder.imageView.setImageResource(Integer.parseInt(listItem.getIcon()));
+        } else {
+            holder.progressBar.setVisibility(View.VISIBLE);
+        }
+    }
 
+    @Override
+    public int getItemViewType(int position) {
+        if (itemList.get(position) == null) {
+            return VIEW_TYPE_PROGRESS;
+        } else {
+            return VIEW_TYPE_CONTENT;
+        }
     }
 
     @Override
@@ -48,16 +80,45 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         return itemList.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+
+    //region load more work
+    public void setLoaded(Boolean isLoading) {
+        this.isLoading = isLoading;
+    }
+
+    public boolean isLoading() {
+        return isLoading;
+    }
+    //endregion
+
+
+    class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle, tvDescription;
         ImageView imageView;
+        private ProgressBar progressBar;
 
-        public ViewHolder(View itemView) {
+        ViewHolder(View itemView, int viewType) {
             super(itemView);
+            switch (viewType){
+                case VIEW_TYPE_CONTENT:
+                    initiateViews(itemView);
+                    break;
+                case VIEW_TYPE_PROGRESS:
+                    initializePaginationProgress();
+                    break;
+                default:
+                    initiateViews(itemView);
+                    break;
+            }
+        }
 
+        private void initiateViews(View itemView) {
             tvTitle = (TextView) itemView.findViewById(R.id.tv_header);
             tvDescription = (TextView) itemView.findViewById(R.id.tv_content);
             imageView = (ImageView) itemView.findViewById(R.id.image_view);
+        }
+        private void initializePaginationProgress() {
+            progressBar = itemView.findViewById(R.id.paginationprogress);
         }
     }
 }
