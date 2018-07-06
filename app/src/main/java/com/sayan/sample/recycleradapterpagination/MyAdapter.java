@@ -1,6 +1,8 @@
 package com.sayan.sample.recycleradapterpagination;
 
 import android.content.Context;
+import android.os.Handler;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +13,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -89,6 +92,66 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     public boolean isLoading() {
         return isLoading;
     }
+
+    public void addNewDataToItems(final ArrayList<Model> newItems, final int loadingItemPosition) {
+        final Handler handler = new Handler();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final DiffUtil.DiffResult diffResult =
+                        DiffUtil.calculateDiff(new DiffCallBack(itemList, newItems));
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        applyDiffResult(newItems, diffResult, loadingItemPosition);
+                    }
+                });
+
+            }
+        }).start();
+    }
+
+    private void applyDiffResult(ArrayList<Model> newModels, DiffUtil.DiffResult diffResult, int loadingItemPosition) {
+        diffResult.dispatchUpdatesTo(this);
+        //add new items
+        itemList.addAll(itemList.size(), newModels);
+        //Remove loading item
+        itemList.remove(loadingItemPosition - 1);
+    }
+
+
+    private static class DiffCallBack extends DiffUtil.Callback {
+
+        private final List<Model> models;
+        private final ArrayList<Model> newModels;
+
+        public DiffCallBack(List<Model> models, ArrayList<Model> newPosts) {
+
+            this.models = models;
+            this.newModels = newPosts;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return models.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newModels.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return false;
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return false;
+        }
+    }
+
     //endregion
 
 
