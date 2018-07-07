@@ -39,6 +39,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         View view = null;
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) == null ?
                 LayoutInflater.from(context) : (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        //inflate and return the viewholder corresponds to the view by a view type
         if (inflater != null) {
             switch (viewType) {
                 case VIEW_TYPE_CONTENT:
@@ -63,15 +64,17 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             holder.tvTitle.setText(listItem.getTitle());
             holder.tvDescription.setText(listItem.getDescription());
             Picasso.with(context).load(listItem.getImage()).into(holder.imageView);
-            //holder.imageView.setImageResource(Integer.parseInt(listItem.getIcon()));
         } else {
+            //when view type is VIEW_TYPE_PROGRESS, set progress bar to visible
             holder.progressBar.setVisibility(View.VISIBLE);
         }
     }
 
     @Override
     public int getItemViewType(int position) {
+        //return the view type for a item position
         if (itemList.get(position) == null) {
+            //if item is null (which was set before intentionally), return VIEW_TYPE_PROGRESS
             return VIEW_TYPE_PROGRESS;
         } else {
             return VIEW_TYPE_CONTENT;
@@ -98,12 +101,13 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                //use diff result for smooth performance of adapter
+                //use diff result (calculateDiff) for smooth performance of adapter reload
                 final DiffUtil.DiffResult diffResult =
                         DiffUtil.calculateDiff(new DiffCallBack(itemList, newItems));
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
+                        //apply the result of diff util to the adapter
                         applyDiffResult(newItems, diffResult, loadingItemPosition);
                     }
                 });
@@ -112,46 +116,61 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         }).start();
     }
 
+    /**
+     * Use this method for applying diff result from calculate diff to the adapter
+     * @param newModels the new items to add
+     * @param diffResult the diff result from calculate diff method
+     * @param loadingItemPosition position to add new items into
+     */
     private void applyDiffResult(ArrayList<Model> newModels, DiffUtil.DiffResult diffResult, int loadingItemPosition) {
+        //Dispatches the update events to the given adapter
         diffResult.dispatchUpdatesTo(this);
         //add new items
         itemList.addAll(itemList.size(), newModels);
-        //Remove loading item
+        //Remove loading (with progress bar) item (which was set to null before adding items to adapter)
         itemList.remove(loadingItemPosition - 1);
     }
 
 
     /**
-     *
+     * A Callback class used by DiffUtil while calculating the diff between two lists.
      */
     private static class DiffCallBack extends DiffUtil.Callback {
 
         private final List<Model> models;
         private final ArrayList<Model> newModels;
 
+        /**
+         * constructor for initiating old and new itemlist
+         * @param models
+         * @param newPosts
+         */
         public DiffCallBack(List<Model> models, ArrayList<Model> newPosts) {
-
             this.models = models;
             this.newModels = newPosts;
         }
 
         @Override
         public int getOldListSize() {
+            //size of old itemlist
             return models.size();
         }
 
         @Override
         public int getNewListSize() {
+            // size of new itemlist
             return newModels.size();
         }
 
         @Override
         public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            //old itemlist and new itemlist are not same, so return false here
             return false;
         }
 
         @Override
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            //contents of the old and new itemlist are not same, so return false
             return false;
         }
     }
@@ -159,6 +178,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     //endregion
 
 
+    //viewholder class for recycler view
     class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle, tvDescription;
         ImageView imageView;
