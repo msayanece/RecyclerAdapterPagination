@@ -98,6 +98,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                //use diff result for smooth performance of adapter
                 final DiffUtil.DiffResult diffResult =
                         DiffUtil.calculateDiff(new DiffCallBack(itemList, newItems));
                 handler.post(new Runnable() {
@@ -120,6 +121,9 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     }
 
 
+    /**
+     *
+     */
     private static class DiffCallBack extends DiffUtil.Callback {
 
         private final List<Model> models;
